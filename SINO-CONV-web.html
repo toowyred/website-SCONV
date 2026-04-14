@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en" translate="no" data-theme="golden_green">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SINO-CONV · 漢変器</title>
+<style>
+  /* Google Fonts CDN fallback [ Noto Sans JP/SC — CDN経由フォールバック ] */
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap');
+
+  /* [ 権限：神SA ]
+     WDXL Lubrifont family (JPN-VNM custom / JPN / SC / TC) — installed on Windows.
+     [ WDXL Lubrifont 字体系列 - 統合フォント定義 ]
+     Windows registers these under slightly different names depending on version,
+     so we list every plausible local() alias. JPN VNM is preferred (superset). */
+
+  @font-face {
+    font-family: 'WDXL Lubrifont';
+    src: local('WDXL Lubrifont JPN VNM'),
+         local('WDXLLubrifontJPNVNM'),
+         local('WDXL Lubrifont JP N'),
+         local('WDXL Lubrifont JPN'),
+         local('WDXLLubrifontJPN'),
+         url('./fonts/WDXLLubrifontJPNVNM-Regular.woff2') format('woff2');
+    unicode-range: U+0000-024F,U+1E00-1EFF,U+3040-309F,U+30A0-30FF,U+4E00-9FFF,U+3400-4DBF,U+FF00-FFEF;
+  }
+  @font-face {
+    font-family: 'WDXL Lubrifont';
+    src: local('WDXL Lubrifont SC'), local('WDXLLubrifontSC'),
+         url('./fonts/WDXLLubrifontSC-Regular.woff2') format('woff2');
+    unicode-range: U+4E00-9FFF;
+  }
+  @font-face {
+    font-family: 'WDXL Lubrifont';
+    src: local('WDXL Lubrifont TC'), local('WDXLLubrifontTC'),
+         url('./fonts/WDXLLubrifontTC-Regular.woff2') format('woff2');
+    unicode-range: U+4E00-9FFF;
+  }
+  @font-face {
+    font-family: 'WDXL Lubrifont';
+    src: local('WDXL Lubrifont JPN'),
+         url('./fonts/WDXLLubrifontJPN-Regular.woff2') format('woff2');
+    unicode-range: U+3040-309F,U+30A0-30FF;
+  }
+
+  :root, [data-theme="dark_orange"] {
+    --bg:         #0a0a0a;
+    --panel:      #111;
+    --panel-soft: #161616;
+    --border:     #222;
+    --accent:     #de7029;
+    --accent-2:   #5fa7e8;
+    --accent-dim: rgba(222,112,41,0.35);
+    --grid-rgba:  rgba(222,112,41,0.06);
+    --fg:         #e6e6e6;
+    --muted:      #888;
+    --dim:        #555;
+    --crit:       #f44336;
+    --good:       #4caf50;
+    /* script colors (for diff + button accents) [ 言語種別色彩定義 ] */
+    --c-trad:     #e85a4f;
+    --c-simp:     #6fb37a;
+    --c-kanji:    #e38cb5;
+    --c-hanja:    #5fa7e8;
+    --c-hannom:   #C8A153;
+  }
+  [data-theme="golden_green"] {
+    --bg:         #0a3835;
+    --panel:      #0e2b29;
+    --panel-soft: #123734;
+    --border:     #1d4a46;
+    --accent:     #C8A153;
+    --accent-2:   #82b8d0;
+    --accent-dim: rgba(200,161,83,0.38);
+    --grid-rgba:  rgba(200,161,83,0.07);
+    --fg:         #e8dcc0;
+    --muted:      #7c8c86;
+    --dim:        #5a6b66;
+    --crit:       #ff7a6a;
+    --good:       #6fb37a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'WDXL Lubrifont', 'Noto Sans JP', 'Noto Sans SC', 'Malgun Gothic', 'Yu Gothic', 'Courier New', monospace;
+    min-height: 100vh;
+    position: relative;
+    padding: 40px 24px 60px;
+  }
+  /* sans used for language tags + Korean chars */
+  .sans { font-family: 'Segoe UI','Malgun Gothic','Yu Gothic',system-ui,sans-serif; }
+
+  /* grid-bg + vignette */
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid-rgba) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-rgba) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(circle at center, #000 30%, transparent 85%);
+    -webkit-mask-image: radial-gradient(circle at center, #000 30%, transparent 85%);
+  }
+  body::after {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.75) 100%),
+      repeating-linear-gradient(to bottom, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px);
+  }
+  .wrap { position:relative; z-index:1; max-width: 1120px; margin: 0 auto; padding-top: 48px; }
+
+  header.brand { text-align:center; margin-bottom: 28px; position: relative; }
+  header.brand .mark {
+    font-size: 20px; letter-spacing: 6px; color: var(--muted); text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  header.brand .title {
+    font-size: 100px; letter-spacing: 25px; color: var(--fg);
+    position: relative; display: inline-block; padding: 0 6px;
+  }
+  header.brand .title::before,
+  header.brand .title::after {
+    content: attr(data-text);
+    position: absolute; inset: 0; padding: inherit;
+    mix-blend-mode: screen; pointer-events: none;
+  }
+  header.brand .title::before {
+    color: var(--accent);
+    transform: translate(2px, 0);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitch-a 3.6s infinite steps(1);
+  }
+  header.brand .title::after {
+    color: var(--accent-2);
+    transform: translate(-2px, 0);
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitch-b 4.2s infinite steps(1);
+  }
+
+  /* kanji subtitle row — each char with reading above, stretched to title width */
+  header.brand .subtitle {
+    display: flex; justify-content: space-between;
+    margin: 6px auto 0; padding: 0 6px;
+  }
+  header.brand .subtitle .k {
+    display: flex; flex-direction: column; align-items: center;
+    flex: 1;
+  }
+  header.brand .subtitle .k .rd {
+    font-size: 12px; letter-spacing: 1px; color: var(--muted);
+    margin-bottom: 1px;
+  }
+  header.brand .subtitle .k .ch {
+    font-size: 80px; line-height: 1.1; color: var(--fg);
+    animation: kanji-glitch 4.8s infinite steps(1);
+  }
+  header.brand .subtitle .k:nth-child(2) .ch { animation-delay: 0.7s; }
+  header.brand .subtitle .k:nth-child(3) .ch { animation-delay: 1.4s; }
+  header.brand .subtitle .k:nth-child(4) .ch { animation-delay: 0.3s; }
+  header.brand .subtitle .k:nth-child(5) .ch { animation-delay: 1.9s; }
+  header.brand .subtitle .k:nth-child(6) .ch { animation-delay: 0.9s; }
+  header.brand .subtitle .k:nth-child(7) .ch { animation-delay: 1.1s; }
+  @keyframes kanji-glitch {
+    0%, 90%, 100% { text-shadow: none; }
+    91% { text-shadow: 2px 0 var(--accent), -2px 0 var(--accent-2); }
+    93% { text-shadow: -1.5px 0 var(--accent-2), 1.5px 0 var(--accent); }
+    95% { text-shadow: 1px 0 var(--accent); }
+    97% { text-shadow: none; }
+  }
+  @keyframes glitch-a {
+    0%, 92%, 100% { transform: translate(0,0); }
+    93% { transform: translate(3px,-1px); }
+    95% { transform: translate(-2px,1px); }
+    97% { transform: translate(1px,0); }
+  }
+  @keyframes glitch-b {
+    0%, 88%, 100% { transform: translate(0,0); }
+    89% { transform: translate(-3px,1px); }
+    91% { transform: translate(2px,-1px); }
+    93% { transform: translate(-1px,0); }
+  }
+
+  /* theme switcher [ テーマ切替機構 ] */
+  /* afest-back link [ AFESTリンク ] */
+  /* ── glassy header bar ── */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: rgba(10,10,10,0.55);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .top-bar #afest-back {
+    font-size: 0.6rem; letter-spacing: 2px;
+    color: var(--fg); text-decoration: none; text-transform: uppercase;
+    padding: 5px 8px; transition: opacity 0.2s;
+  }
+  .top-bar #afest-back:hover { opacity: 0.7; }
+  .top-bar .bar-spacer { flex: 1; }
+  .top-bar .bar-title {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 12px; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--fg); white-space: nowrap;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .top-bar.show-title .bar-title { opacity: 1; }
+  .top-bar button {
+    font-family: inherit;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    background: rgba(255,255,255,0.06); color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.08); padding: 5px 12px; cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .top-bar button:hover { color: var(--fg); border-color: rgba(255,255,255,0.18); }
+  .top-bar button.active { color: var(--accent); border-color: var(--accent); }
+  .top-bar .sw-sep { color: var(--dim); font-size: 11px; line-height: 1; padding: 0 2px; }
+
+  /* editor */
+  .editor {
+    position: relative;
+    background: rgba(17,17,17,0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--accent-dim);
+    box-shadow: 8px 8px 0 rgba(222,112,41,0.15), 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .editor { position: relative; }
+  .editor::before, .editor::after {
+    content:''; position:absolute; width:14px; height:14px; border:2px solid var(--accent);
+  }
+  .editor::before { top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .editor::after  { bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  .ed-head {
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+    flex-wrap: wrap;
+  }
+  .ed-head .label {
+    font-size: 12px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase;
+    flex: 0 0 auto;
+  }
+  .ed-head .zoom {
+    display:flex; align-items:center; gap:8px; flex:1 1 auto; justify-content:center;
+    font-size:12px; color: var(--muted); letter-spacing:1.5px;
+  }
+  .ed-head .zoom input[type=range] {
+    -webkit-appearance:none; appearance:none; width: 160px; height: 2px;
+    background: var(--border); outline:none;
+  }
+  .ed-head .zoom input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:12px; height:12px; background: var(--accent);
+    border: 1px solid var(--accent); cursor:pointer;
+  }
+  .ed-head .zoom input[type=range]::-moz-range-thumb {
+    width:12px; height:12px; background: var(--accent); border: 1px solid var(--accent); cursor:pointer;
+  }
+  .ed-head .zoom .zval { color: var(--fg); min-width: 36px; text-align:right; }
+  .ed-head .zoom .zreset {
+    font-family:inherit; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 4px 10px; cursor: pointer;
+  }
+  .ed-head .zoom .zreset:hover { color: var(--accent); border-color: var(--accent); }
+  #btn-fontswap {
+    font-family:inherit; font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    padding: 4px 10px; cursor: pointer; flex: 0 0 auto;
+  }
+  #btn-fontswap:hover { color: var(--accent); border-color: var(--accent); }
+  .ed-head .stats { font-size: 13px; color: var(--muted); letter-spacing: 1.5px; flex: 0 0 auto; }
+  .ed-head .stats span { color: var(--fg); margin-left: 4px; }
+
+  textarea#txt {
+    display:block; width:100%; min-height: 250px;
+    background: transparent; color: var(--fg);
+    border: none; outline: none; resize: vertical;
+    font-family: 'WDXL Lubrifont','Malgun Gothic','Yu Gothic','Courier New',monospace;
+    font-size: 25px; line-height: 1.6;
+    padding: 18px 20px 80px;
+  }
+
+  /* floating buttons inside editor */
+  .editor .float-ops {
+    position: absolute;
+    display: flex; gap: 10px;
+    z-index: 5;
+  }
+  .editor .float-ops.right { bottom: 18px; right: 22px; }
+  .editor .float-ops.left  { bottom: 18px; left: 22px; }
+  .editor .float-ops .fbtn {
+    font-family: inherit;
+    font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
+    background: rgba(0,0,0,0.65);
+    color: var(--fg);
+    border: 1px solid var(--accent);
+    padding: 9px 16px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow:
+      0 6px 18px rgba(0,0,0,0.6),
+      4px 4px 0 var(--accent-dim);
+    transition: all .12s;
+  }
+  .editor .float-ops .fbtn:hover {
+    color: var(--accent);
+    transform: translate(-2px,-2px);
+    box-shadow:
+      0 10px 24px rgba(0,0,0,0.7),
+      6px 6px 0 var(--accent-dim);
+  }
+  .editor .float-ops .fbtn:active { transform: translate(0,0); }
+  .editor .float-ops .fbtn.warn { border-color: var(--crit); }
+  .editor .float-ops .fbtn.warn:hover { color: var(--crit); box-shadow: 0 10px 24px rgba(0,0,0,0.7), 6px 6px 0 rgba(244,67,54,0.3); }
+  /* pronunciation toggle buttons */
+  .editor .float-ops .fbtn.pron {
+    font-size: 20px; padding: 6px 12px;
+    border-color: var(--border);
+    color: var(--muted);
+    letter-spacing: 0;
+  }
+  .editor .float-ops .fbtn.pron.active {
+    color: var(--pcolor);
+    border-color: var(--pcolor);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6), 3px 3px 0 color-mix(in srgb, var(--pcolor) 30%, transparent);
+  }
+
+  /* highlight overlay (behind textarea for inline coloring) [ ハイライト層 - テキストエリア背面着色 ] */
+  .editor .hl-wrap { position: relative; }
+  .editor .hl-layer {
+    position: absolute; inset: 0;
+    pointer-events: none; overflow: hidden;
+    white-space: pre-wrap; word-break: break-word;
+    font-family: 'WDXL Lubrifont','Malgun Gothic','Yu Gothic','Courier New',monospace;
+    font-size: 25px; line-height: 1.6;
+    padding: 18px 20px 80px;
+    color: transparent;
+    z-index: 0;
+  }
+  /* base .hl in hl-layer uses background from inline --hl-color */
+  .editor textarea#txt {
+    position: relative; z-index: 1;
+    background: transparent;
+    caret-color: var(--fg);
+  }
+
+  /* reading panel */
+  #reading-panel {
+    display:none;
+    margin-top: 14px;
+    background: rgba(17,17,17,0.72);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+  }
+  #reading-panel.show { display:block; }
+  #reading-panel .rh {
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:10px; letter-spacing:2px; color: var(--muted); text-transform:uppercase;
+    margin-bottom: 8px;
+  }
+  #reading-panel .rh .rlabel { color: var(--accent); }
+  #reading-panel .rh .rclose {
+    font-family:inherit; font-size:9px; background:transparent; color:var(--muted);
+    border:1px solid var(--border); padding:3px 8px; cursor:pointer; letter-spacing:1.5px;
+  }
+  #reading-body {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    font-family: 'WDXL Lubrifont','Malgun Gothic','Yu Gothic','Courier New',monospace;
+    line-height: 1.4;
+    color: var(--fg);
+  }
+  #reading-body .rd {
+    display: inline-flex; flex-direction: column; align-items: center;
+    min-width: 1.6em; padding: 2px 3px;
+  }
+  #reading-body .rd .char {
+    font-size: 22px; color: var(--fg);
+  }
+  #reading-body .rd .read {
+    font-size: 14px; color: var(--muted); white-space: nowrap;
+  }
+  #reading-body .rd .read.has { color: var(--rd-color, var(--accent)); }
+  #reading-body .brk { flex-basis: 100%; height: 0; }
+  /* hl-layer colored background on changed chars */
+  .editor .hl-layer .hl {
+    background: var(--hl-color);
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* buttons */
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .btn {
+    font-family: inherit;
+    font-size: 25px; letter-spacing: 1px;
+    background: rgba(17,17,17,0.7);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    padding: 15px 22px;
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .bar:not(.bar-case):not(.bar-conv) .btn { text-transform: uppercase; letter-spacing: 2px; font-size: 25px; flex: 1; text-align: center; }
+  .bar-case .btn { text-transform: none; font-size: 25px; padding: 14px 13px; flex: 1; text-align: center; }
+  .btn:hover:not(:disabled) {
+    color: var(--accent); border-color: var(--accent);
+    box-shadow: 3px 3px 0 var(--accent-dim);
+    transform: translate(-1px,-1px);
+  }
+  .btn:active:not(:disabled) { transform: translate(0,0); box-shadow:none; }
+  .btn:disabled { color: var(--dim); border-color: var(--border); cursor:not-allowed; opacity:0.5; }
+  .btn.primary { color: var(--accent); border-color: var(--accent); }
+  .btn.warn:hover:not(:disabled) { color: var(--crit); border-color: var(--crit); box-shadow: 3px 3px 0 rgba(244,67,54,0.3); }
+
+  /* converter buttons — single line, uniform width, AD督-style chromatic glitch */
+  .bar-conv { gap: 5px; }
+  .btn-conv {
+    position: relative;
+    font-family: 'WDXL Lubrifont','Malgun Gothic','Yu Gothic','Courier New',monospace;
+    background: rgba(17,17,17,0.72);
+    color: var(--fg);
+    border: 1px solid var(--cc, var(--accent));
+    padding: 11px 15px;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .btn-conv:hover:not(:disabled) {
+    box-shadow: 5px 5px 0 color-mix(in srgb, var(--cc, var(--accent)) 30%, transparent);
+    transform: translate(-2px,-2px);
+  }
+  .btn-conv:active:not(:disabled) { transform: translate(0,0); box-shadow:none; }
+  .btn-conv .line {
+    position: relative; display: block; line-height: 1.25;
+    font-size: 39px; letter-spacing: 2px; color: var(--cc, var(--accent));
+  }
+  .btn-conv .line::before,
+  .btn-conv .line::after {
+    content: attr(data-text);
+    position: absolute; inset: 0;
+    mix-blend-mode: screen; pointer-events: none;
+    white-space: nowrap;
+  }
+  .btn-conv .line::before {
+    color: var(--accent-2);
+    transform: translate(1.5px, 0);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitch-a 3.6s infinite steps(1);
+  }
+  .btn-conv .line::after {
+    color: #fff;
+    transform: translate(-1.5px, 0);
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitch-b 4.2s infinite steps(1);
+  }
+  .btn-conv .line .alt { display: none; }
+  .btn-conv .line .alt.on { display: inline; }
+  .btn-conv.flashing .line {
+    animation: subflash .35s linear;
+  }
+  @keyframes subflash {
+    0%   { text-shadow: 2px 0 var(--c-trad), -2px 0 var(--c-hanja); }
+    50%  { text-shadow: -2px 0 var(--c-simp), 2px 0 var(--c-kanji); }
+    100% { text-shadow: none; }
+  }
+  /* per-button accent */
+  .btn-conv.trad   { --cc: var(--c-trad); }
+  .btn-conv.simp   { --cc: var(--c-simp); }
+  .btn-conv.kanji  { --cc: var(--c-kanji); }
+  .btn-conv.hanja  { --cc: var(--c-hanja); }
+  .btn-conv.hannom { --cc: var(--c-hannom); }
+  .btn-conv:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-conv:disabled:hover { transform: none; box-shadow: none; }
+
+  /* pad char (invisible ideographic width) */
+  .pad { visibility: hidden; }
+
+  .group-label {
+    font-size: 15px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase;
+    margin: 22px 0 6px;
+    border-left: 2px solid var(--accent); padding-left: 8px;
+  }
+
+  /* toast strip — sits between editor and case row */
+  .toast-slot {
+    height: 32px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #toast {
+    background: transparent; color: var(--accent);
+    padding: 6px 14px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+    border: 1px solid transparent;
+  }
+  #toast.show {
+    opacity: 1;
+    background: rgba(0,0,0,0.7);
+    border-color: var(--accent-dim);
+  }
+
+  footer.foot {
+    text-align:center; margin-top: 40px;
+    font-size: 9px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase;
+  }
+
+  /* info button [ 情報ボタン ] */
+  .info-btn {
+    display: block; margin: 0 auto 16px; cursor: pointer;
+    font-family: inherit;
+    font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    padding: 8px 20px;
+    transition: opacity 0.2s;
+  }
+  .info-btn:hover { opacity: 0.8; }
+
+  #info-overlay {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #info-overlay.open { display: flex; }
+  #info-panel {
+    background: var(--accent);
+    color: #0a1211;
+    max-width: 740px; width: 90vw; max-height: 85vh;
+    border-radius: 4px; overflow-y: auto;
+    padding: 36px 40px 32px;
+    font-family: inherit;
+    position: relative;
+  }
+  #info-panel h2 {
+    font-size: 26px; letter-spacing: 4px; text-transform: uppercase;
+    margin: 0 0 18px; padding-bottom: 10px;
+    border-bottom: 2px solid rgba(10,18,17,0.25);
+  }
+  #info-panel h3 {
+    font-size: 18px; letter-spacing: 3px; text-transform: uppercase;
+    margin: 28px 0 10px; color: #0a1211;
+  }
+  #info-panel p, #info-panel li {
+    font-size: 16px; line-height: 1.7; margin: 6px 0;
+  }
+  .glyph-table {
+    width: 100%; border-collapse: collapse; margin: 12px 0;
+    font-size: 16px; table-layout: fixed;
+  }
+  .glyph-table th, .glyph-table td {
+    border: 1px solid rgba(10,18,17,0.2);
+    padding: 6px 14px; text-align: center;
+  }
+  .glyph-table th {
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+    background: rgba(10,18,17,0.1);
+  }
+  .glyph-table col.col-code { width: 40%; }
+  .glyph-table col.col-glyph { width: 30%; }
+  .glyph-table td:first-child {
+    font-size: 11px; letter-spacing: 1px; font-family: monospace;
+    color: rgba(10,18,17,0.6);
+    line-height: 1.5;
+  }
+  .glyph-note {
+    font-size: 13px !important; letter-spacing: 1px;
+    text-align: left !important; color: #0a1211 !important;
+    font-family: inherit !important;
+    font-style: italic; padding: 8px 14px !important;
+    background: rgba(10,18,17,0.06);
+  }
+  .glyph-table td:nth-child(2), .glyph-table td:nth-child(3) {
+    font-size: 28px;
+  }
+
+  #info-panel .sources-section p, #info-panel .sources-section li {
+    font-size: 13px; line-height: 1.7;
+  }
+  #info-panel .sources-section h2 { font-size: 20px; }
+  #info-panel .sources-section h3 { font-size: 14px; }
+  #info-panel li:has(.info-pron) { display: flex; align-items: baseline; gap: 8px; list-style: none; }
+  #info-panel li .info-pron { flex-shrink: 0; }
+  #info-panel li .li-desc { flex: 1; }
+  #info-panel ul { padding-left: 18px; }
+  #info-panel code {
+    background: rgba(10,18,17,0.12); padding: 1px 5px; border-radius: 2px;
+    font-family: inherit; font-size: 12px;
+  }
+  #info-panel a { color: #0a1211; text-decoration: underline; }
+  #info-panel a:hover { opacity: 0.7; }
+  /* Japanese UI: +1 size up for info panel (excludes tables, except 符号位置 header) */
+  [lang="ja"] #info-panel h2 { font-size: 28px; }
+  [lang="ja"] #info-panel h3 { font-size: 20px; }
+  [lang="ja"] #info-panel p, [lang="ja"] #info-panel li { font-size: 18px; }
+  [lang="ja"] .info-pron { font-size: 18px; }
+  [lang="ja"] #info-panel .sources-section p,
+  [lang="ja"] #info-panel .sources-section li { font-size: 15px; }
+  [lang="ja"] #info-panel .sources-section h2 { font-size: 22px; }
+  [lang="ja"] #info-panel .sources-section h3 { font-size: 16px; }
+  [lang="ja"] .glyph-table th[data-i18n="glyph-table-h-codepoint"] { font-size: 14px; }
+
+  #info-panel .info-close {
+    display: block; margin: 30px auto 0; cursor: pointer;
+    font-family: inherit; font-size: 14px; letter-spacing: 2px;
+    background: none; color: #0a1211;
+    border: 1px solid rgba(10,18,17,0.3); padding: 8px 24px;
+    position: relative; white-space: nowrap;
+    transition: border-color 0.2s;
+  }
+  #info-panel .info-close:hover { border-color: #0a1211; color: transparent; }
+  #info-panel .info-close::after {
+    content: attr(data-glitch);
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent; font-family: inherit;
+  }
+  #info-panel .info-close:hover::after {
+    color: #0a1211;
+    animation: stationary-flicker 0.3s steps(2) infinite;
+  }
+  @keyframes stationary-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+
+  .script-color { font-weight: bold; }
+  .sc-trad { color: var(--c-trad); }
+  .sc-simp { color: var(--c-simp); }
+  .sc-kanji { color: var(--c-kanji); }
+  .sc-hanja { color: var(--c-hanja); }
+  .sc-hannom { color: var(--c-hannom); }
+
+  /* mini converter button replicas inside info panel */
+  .info-conv-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0;
+  }
+  .info-conv {
+    display: inline-block;
+    font-family: 'WDXL Lubrifont','Noto Sans JP','Noto Sans SC','Malgun Gothic',monospace;
+    font-size: 16px; letter-spacing: 1px; line-height: 1.25;
+    background: rgba(10,18,17,0.12);
+    border: 1px solid var(--icc, rgba(10,18,17,0.3));
+    padding: 5px 12px;
+    white-space: nowrap;
+    color: var(--icc, #0a1211);
+    min-width: 130px; text-align: left;
+    box-sizing: border-box;
+  }
+  .info-conv.ic-trad   { --icc: var(--c-trad); }
+  .info-conv.ic-simp   { --icc: var(--c-simp); }
+  .info-conv.ic-kanji  { --icc: var(--c-kanji); }
+  .info-conv.ic-hanja  { --icc: var(--c-hanja); }
+  .info-conv.ic-hannom { --icc: var(--c-hannom); }
+
+  /* mini color chip */
+  .info-chip {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    background: var(--chip-c, #888);
+    color: #0a1211; font-weight: bold;
+    padding: 2px 8px; border-radius: 2px;
+    vertical-align: middle;
+  }
+
+  /* mini pron button replicas */
+  .info-pron {
+    display: inline-block;
+    font-family: 'WDXL Lubrifont','Noto Sans JP','Noto Sans SC',monospace;
+    font-size: 16px; padding: 3px 9px;
+    border: 1px solid var(--icc, rgba(10,18,17,0.3));
+    color: var(--icc, #0a1211);
+    background: rgba(10,18,17,0.08);
+    vertical-align: middle; margin-right: 4px;
+  }
+
+  .info-pron.eq { min-width: 130px; text-align: left; box-sizing: border-box; }
+
+  /* Nôm font override */
+  .nom-font { font-family: 'Noto Sans JP','Noto Sans SC','WDXL Lubrifont',sans-serif; }
+
+</style>
+<script src="./lib/opencc-full.js"></script>
+<script src="./lib/readings.js"></script>
+<script src="./lib/i18n.js"></script>
+</head>
+<body>
+
+<nav class="top-bar">
+  <a id="afest-back" href="https://afest.io">← AFEST</a>
+  <span class="bar-title">SINO-CONV 漢変器</span>
+  <div class="bar-spacer"></div>
+  <button data-lang-btn="en" class="active">ENG</button>
+  <button data-lang-btn="ja">日本語</button>
+  <span class="sw-sep">|</span>
+  <button data-theme-btn="dark_orange" data-i18n="theme-dark-orange">Dark Orange</button>
+  <button data-theme-btn="golden_green" class="active" data-i18n="theme-golden-green">Golden Green</button>
+</nav>
+
+<div class="wrap">
+
+  <header class="brand">
+    <div class="mark">SINO-CONV 漢変器</div>
+    <div class="title" data-text="CJKV CONVERTER">CJKV CONVERTER</div>
+    <div class="subtitle">
+      <span class="k"><span class="rd">にち</span><span class="ch">日</span></span>
+      <span class="k"><span class="rd">ちゅう</span><span class="ch">中</span></span>
+      <span class="k"><span class="rd">かん</span><span class="ch">韓</span></span>
+      <span class="k"><span class="rd">えつ</span><span class="ch">越</span></span>
+      <span class="k"><span class="rd">へん</span><span class="ch">変</span></span>
+      <span class="k"><span class="rd">かん</span><span class="ch">換</span></span>
+      <span class="k"><span class="rd">き</span><span class="ch">器</span></span>
+    </div>
+  </header>
+
+  <button class="info-btn" id="info-open" data-i18n="info-btn">How to use · Credits</button>
+
+  <div class="editor">
+    <div class="ed-head">
+      <div class="label" data-i18n="label-buffer">// input buffer</div>
+      <button class="zreset" id="btn-fontswap" data-i18n="btn-fontswap" data-i18n-title="btn-fontswap-title" title="Switch between WD-XL Lubrifont and Noto Sans CJK">Change font</button>
+      <div class="zoom">
+        ZOOM
+        <input type="range" id="zoom" min="60" max="500" step="5" value="100">
+        <span class="zval" id="zval">100%</span>
+        <button class="zreset" id="zreset" data-i18n="zoom-reset">↺ reset</button>
+      </div>
+      <div class="stats">
+        CHARS<span id="s-chars">0</span> &nbsp;
+        WORDS<span id="s-words">0</span> &nbsp;
+        LINES<span id="s-lines">0</span>
+      </div>
+    </div>
+    <div class="hl-wrap">
+      <div class="hl-layer" id="hl-layer"></div>
+      <textarea id="txt" data-i18n-placeholder="placeholder" placeholder="type or paste…"></textarea>
+    </div>
+    <div class="float-ops left" id="pron-bar">
+      <button class="fbtn pron" data-pron="bopomofo" style="--pcolor:var(--c-trad)" title="注音 Bopomofo">繁</button>
+      <button class="fbtn pron" data-pron="pinyin" style="--pcolor:var(--c-simp)" title="拼音 Pīnyīn">简</button>
+      <button class="fbtn pron" data-pron="jp" style="--pcolor:var(--c-kanji)" title="ひらがな Hiragana">日</button>
+      <button class="fbtn pron" data-pron="kr" style="--pcolor:var(--c-hanja)" title="한글 Hangul">韓</button>
+      <button class="fbtn pron" data-pron="vi" style="--pcolor:var(--c-hannom)" title="漢越 Hán-Việt">越</button>
+    </div>
+    <div class="float-ops right">
+      <button class="fbtn" id="btn-paste" data-i18n="btn-paste">Paste</button>
+      <button class="fbtn" id="btn-copy" data-i18n="btn-copy">Copy</button>
+      <button class="fbtn warn" id="btn-clear" data-i18n="btn-clear">Clear</button>
+    </div>
+  </div>
+
+  <div id="reading-panel">
+    <div class="rh">
+      <div class="rlabel">// reading output</div>
+      <button class="rclose" id="rclose">× close</button>
+    </div>
+    <div id="reading-body"></div>
+  </div>
+
+  <div class="toast-slot"><div id="toast"></div></div>
+
+  <div class="group-label" data-i18n="group-case">case</div>
+  <div class="bar bar-case">
+    <button class="btn" data-case="sentence">Sentence case</button>
+    <button class="btn" data-case="lower">lower case</button>
+    <button class="btn" data-case="upper">UPPER CASE</button>
+    <button class="btn" data-case="cap">Capitalized</button>
+    <button class="btn" data-case="alt">aLtErNaTiNg</button>
+    <button class="btn" data-case="inverse">InVeRsE</button>
+    <button class="btn" data-case="title">Title Case</button>
+    <button class="btn" id="btn-kana">全と角カナ</button>
+  </div>
+
+  <div class="group-label" data-i18n="group-conv">Hanji · Kanji · Hanja · Chữ hán</div>
+  <div class="bar bar-conv">
+
+    <button class="btn-conv trad" id="btn-trad">
+      <div class="line" data-text="中 Traditional 繁　　">
+        <span class="alt on" data-plain="中 Traditional 繁　　">中 Traditional 繁<span class="pad">　　</span></span>
+        <span class="alt" data-plain="中 Traditional 繁體字">中 Traditional 繁體字</span>
+        <span class="alt" data-plain="中 Traditional 正體字">中 Traditional 正體字</span>
+      </div>
+    </button>
+
+    <button class="btn-conv simp" id="btn-simp">
+      <div class="line" data-text="中 Simplified 简　　">
+        <span class="alt on" data-plain="中 Simplified 简　　">中 Simplified 简<span class="pad">　　</span></span>
+        <span class="alt" data-plain="中 Simplified 简化字">中 Simplified 简化字</span>
+        <span class="alt" data-plain="中 Simplified 简体字">中 Simplified 简体字</span>
+      </div>
+    </button>
+
+    <button class="btn-conv kanji" id="btn-kanji">
+      <div class="line" data-text="日 Kanji 漢　　">
+        <span class="alt on" data-plain="日 Kanji 漢　　">日 Kanji 漢<span class="pad">　　</span></span>
+        <span class="alt" data-plain="日 Kanji 漢　字">日 Kanji 漢<span class="pad">　</span>字</span>
+        <span class="alt" data-plain="日 Kanji かんじ">日 Kanji かんじ</span>
+      </div>
+    </button>
+
+    <button class="btn-conv hanja" id="btn-hanja">
+      <div class="line" data-text="韓 Hanja 漢　　">
+        <span class="alt on" data-plain="韓 Hanja 漢　　">韓 Hanja 漢<span class="pad">　　</span></span>
+        <span class="alt" data-plain="漢 Hanja 漢　字">漢 Hanja 漢<span class="pad">　</span>字</span>
+        <span class="alt" data-plain="漢 Hanja 한　자">漢 Hanja 한<span class="pad">　</span>자</span>
+      </div>
+    </button>
+
+    <button class="btn-conv hannom" id="btn-hannom" disabled title="Select one Han character">
+      <div class="line" data-text="越 HánTự 漢　　">
+        <span class="alt on" data-plain="越 HánTự 漢　　">越 HánTự 漢<span class="pad">　　</span></span>
+        <span class="alt" data-plain="越 HánTự 漢　喃">越 HánTự 漢<span class="pad">　</span>喃</span>
+        <span class="alt" data-plain="越 TừHán 詞漢喃">越 TừHán 詞漢喃</span>
+      </div>
+    </button>
+
+  </div>
+
+  <div class="group-label" data-i18n="group-buffer">buffer</div>
+  <div class="bar">
+    <button class="btn" id="btn-download" data-i18n="btn-download">Download .txt</button>
+  </div>
+
+  <footer class="foot">(credits go here)</footer>
+</div>
+
+<div id="info-overlay">
+  <div id="info-panel">
+    <h2 data-i18n="h2-howto">How to use</h2>
+    <h3 data-i18n="h3-case">Case</h3>
+    <p data-i18n-html="case-desc-html">Case buttons work with Latin-based characters that have upper and lower case forms. The <span class="info-pron">全と角カナ</span> button toggles between fullwidth (全角 カナ) and halfwidth (半角 ｶﾅ) for katakana and ASCII characters.</p>
+    <table class="glyph-table">
+      <colgroup><col class="col-code"><col class="col-glyph"><col class="col-glyph"></colgroup>
+      <thead><tr><th data-i18n="glyph-table-h-codepoint">Codepoint</th><th data-i18n="case-table-h-lower">Lower / Half</th><th data-i18n="case-table-h-upper">Upper / Full</th></tr></thead>
+      <tbody>
+        <tr><td>U+00E7<br>U+00C7</td><td>ç</td><td>Ç</td></tr>
+        <tr><td>U+FF82<br>U+30C4</td><td>ﾂ</td><td>ツ</td></tr>
+      </tbody>
+    </table>
+
+    <h3 data-i18n="h3-glyph">Glyph converter</h3>
+    <p data-i18n="glyph-desc">Type or paste text into the input buffer, then click a converter button. Conversions work in any direction — the input does not need to be in a specific script. For example, you can convert Japanese Kanji directly to Korean Hanja, or Simplified Chinese to Kanji.</p>
+    <ul>
+      <li><span class="info-pron eq">中 Traditional</span><span class="li-desc" data-i18n-html="trad-desc-html">converts to Traditional Chinese (正體字).<br>Changed characters are highlighted in&nbsp;<span class="info-chip" style="--chip-c:var(--c-trad)">red</span></span></li>
+      <li><span class="info-pron eq">中 Simplified</span><span class="li-desc" data-i18n-html="simp-desc-html">converts to Simplified Chinese (简化字).<br>Changed characters are highlighted in&nbsp;<span class="info-chip" style="--chip-c:var(--c-simp)">green</span></span></li>
+      <li><span class="info-pron eq">日 Kanji</span><span class="li-desc" data-i18n-html="kanji-desc-html">converts to Japanese Kanji (新字体 shinjitai).<br>Changed characters are highlighted in&nbsp;<span class="info-chip" style="--chip-c:var(--c-kanji)">pink</span></span></li>
+      <li><span class="info-pron eq">韓 Hanja</span><span class="li-desc" data-i18n-html="hanja-desc-html">converts to Korean Hanja with reform glyph variants (敎→教, 硏→研, 爲→为, etc.).<br>Changed characters are highlighted in&nbsp;<span class="info-chip" style="--chip-c:var(--c-hanja)">blue</span></span></li>
+    </ul>
+    <p data-i18n="glyph-standard">When the target script has multiple possible glyph variants for a character, the converter follows each standard's preferred form — e.g. Japanese Kanji uses shinjitai (新字体), Korean Hanja uses reform glyphs adopted in modern usage.</p>
+    <p data-i18n-html="glyph-font-note-html">Due to the aesthetic design and to maintain the use of one font across entire webpage, some characters may look or be displayed the same.<br>Please use the <span class="info-pron">Change font</span> button in the editor header and zoom if needed to inspect differences.</p>
+    <table class="glyph-table">
+      <colgroup><col class="col-code"><col class="col-glyph"><col class="col-glyph"></colgroup>
+      <thead><tr><th data-i18n="glyph-table-h-codepoint">Codepoint</th><th>WD-XL&nbsp;Lubrifont</th><th>Noto Sans</th></tr></thead>
+      <tbody>
+        <tr><td>U+784F<br><span data-i18n="gm-784f">research</span></td><td style="font-family:'WDXL Lubrifont',monospace">硏</td><td class="nom-font">硏</td></tr>
+        <tr><td>U+7814<br><span data-i18n="gm-7814">research</span></td><td style="font-family:'WDXL Lubrifont',monospace">研</td><td class="nom-font">研</td></tr>
+        <tr><td>U+654E<br><span data-i18n="gm-654e">teach</span></td><td style="font-family:'WDXL Lubrifont',monospace">敎</td><td class="nom-font">敎</td></tr>
+        <tr><td>U+6559<br><span data-i18n="gm-6559">teach</span></td><td style="font-family:'WDXL Lubrifont',monospace">教</td><td class="nom-font">教</td></tr>
+        <tr><td>U+54C0<br><span data-i18n="gm-54c0">sad</span></td><td style="font-family:'WDXL Lubrifont',monospace">哀</td><td class="nom-font">哀</td></tr>
+        <tr><td>U+8870<br><span data-i18n="gm-8870">decline</span></td><td style="font-family:'WDXL Lubrifont',monospace">衰</td><td class="nom-font">衰</td></tr>
+      </tbody>
+    </table>
+
+    <h3 data-i18n="h3-hantu">HánTự — Chữ&nbsp;Nôm lookup</h3>
+    <p data-i18n-html="hantu-desc-html">This button works differently from the others, because <span class="nom-font">𡨸喃</span> — the historical Vietnamese logographic script — was never fully standardized before the switch to Quốc&nbsp;Ngữ. Countless variant forms exist, many of which cannot even display without specialized fonts (we use「字」as a stand-in for our button because the Vietnamese-equivalent&nbsp;「<span class="nom-font">𡨸</span>」requires rare Unicode extensions).</p>
+    <table class="glyph-table">
+      <colgroup><col class="col-code"><col class="col-glyph"><col class="col-glyph"></colgroup>
+      <thead><tr><th data-i18n="glyph-table-h-codepoint">Codepoint</th><th>WD-XL&nbsp;Lubrifont</th><th>Noto Sans</th></tr></thead>
+      <tbody>
+        <tr><td colspan="3" class="glyph-note" data-i18n="hantu-note">An example of variant forms for「word」</td></tr>
+        <tr><td>U+5B57<br><span data-i18n="hantu-row-pinyin">pīnyīn: zì</span></td><td style="font-family:'WDXL Lubrifont',monospace">字</td><td class="nom-font">字</td></tr>
+        <tr><td>U+21A38<br><span data-i18n="hantu-row-nom">nôm-writing for U+5B57</span></td><td style="font-family:'WDXL Lubrifont',monospace;user-select:none;-webkit-user-select:none;pointer-events:none">□</td><td class="nom-font">𡨸</td></tr>
+        <tr><td>U+0074 U+1EF1<br><span data-i18n="hantu-row-hanviet">hán-việt reading for U+5B57</span></td><td style="font-family:'WDXL Lubrifont',monospace">tự</td><td class="nom-font">tự</td></tr>
+      </tbody>
+    </table>
+    <p data-i18n-html="hantu-usage-html">To use: <strong>highlight exactly one Han character</strong> in the input buffer, then click <span class="info-pron">越 HánTự</span>. This opens an external lookup page (hvdic.thivien.net) for that character's Nôm readings and variants.</p>
+
+    <h3 data-i18n="h3-reading">Reading buttons</h3>
+    <p data-i18n="reading-desc">The pronunciation buttons on the left side of the editor output character-by-character readings:</p>
+    <ul>
+      <li><span class="info-pron ic-trad">繁</span><span class="li-desc" data-i18n="reading-bopomofo">Bopomofo / Zhuyin (注音符號)</span></li>
+      <li><span class="info-pron ic-simp">简</span><span class="li-desc" data-i18n="reading-pinyin">Pīnyīn with tone marks</span></li>
+      <li><span class="info-pron ic-kanji">日</span><span class="li-desc" data-i18n="reading-jp">Japanese on'yomi in hiragana</span></li>
+      <li><span class="info-pron ic-hanja">韓</span><span class="li-desc" data-i18n="reading-kr">Korean hanja reading in hangul</span></li>
+      <li><span class="info-pron ic-hannom">越</span><span class="li-desc" data-i18n="reading-vi">Sino-Vietnamese (Hán&nbsp;Việt) reading</span></li>
+    </ul>
+
+    <div class="sources-section">
+    <h2 data-i18n="h2-sources">Sources</h2>
+    <ul>
+      <li data-i18n-html="source-opencc-html"><strong>OpenCC-js</strong> (v1.0.5) — Open Chinese Convert by nk2028. Handles all script conversions between Traditional, Simplified, Japanese Kanji, and Korean Hanja offline.</li>
+      <li data-i18n-html="source-unihan-html"><strong>Unihan readings</strong> — Character readings (Mandarin pinyin, Japanese on'yomi, Korean hangul, Vietnamese Hán Việt) extracted from the Unicode Han Database via dahlia/unihan-json (Unicode 12.1.0).</li>
+      <li data-i18n-html="source-hannom-html"><strong>Hán-Nôm lookup</strong> — Tra Hán-Nôm dictionary at hvdic.thivien.net.</li>
+    </ul>
+
+    <h3 data-i18n="h3-font">Font</h3>
+    <p data-i18n-html="font-wdxl-html">This page uses a modified font from the <strong>WD-XL&nbsp;Lubrifont</strong> project by © NightFurySL2001 / 夜煞之乐2001, licensed under the SIL Open Font License / MIT License.</p>
+    <p data-i18n-html="font-noto-html">Fallback font: <strong>Noto Sans CJK</strong> (Noto Sans JP / Noto Sans SC) by Google, licensed under the SIL Open Font License, Version 1.1.</p>
+    </div>
+
+    <button class="info-close" data-i18n="close-btn" data-i18n-glitch="close-btn-glitch" data-glitch="   閉 じ る   "> [ close_file ] </button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const txt = $('txt');
+
+// ----- hl-layer (inline coloring behind textarea) [ ハイライト表示レイヤー - 変更箇所着色処理 ] -----
+const hlLayer = $('hl-layer');
+let hlData = null; // { before, after, color } — last conversion result
+
+function renderHL(before, after, color) {
+  const A = [...before], B = [...after];
+  const maxLen = Math.max(A.length, B.length);
+  let html = '';
+  for (let i = 0; i < maxLen; i++) {
+    const a = A[i] || '', b = B[i] || '';
+    const esc = c => c.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+    if (b && a !== b) {
+      html += '<span class="hl" style="--hl-color:' + color + '">' + esc(b) + '</span>';
+    } else {
+      html += esc(b);
+    }
+  }
+  hlLayer.innerHTML = html;
+  hlData = { before, after, color };
+}
+function clearHL() {
+  hlLayer.innerHTML = '';
+  hlData = null;
+}
+
+// scroll sync: textarea → hl-layer
+txt.addEventListener('scroll', () => {
+  hlLayer.scrollTop = txt.scrollTop;
+  hlLayer.scrollLeft = txt.scrollLeft;
+});
+
+// ----- stats [ 統計データ更新：文字数・単語数・行数 ] -----
+function updateStats() {
+  const v = txt.value;
+  $('s-chars').textContent = v.length;
+  $('s-words').textContent = v.trim() ? v.trim().split(/\s+/).length : 0;
+  $('s-lines').textContent = v ? v.split(/\n/).length : 0;
+}
+txt.addEventListener('input', () => { updateStats(); clearHL(); });
+
+// ----- auto-detect Sino on paste (1.5s delay, Traditional priority) [ 貼付時の漢字自動検知・正規化：繁体字優先処理 ] -----
+let pasteTimer = null;
+txt.addEventListener('paste', () => {
+  clearTimeout(pasteTimer);
+  pasteTimer = setTimeout(() => {
+    if (!window.OpenCC || !txt.value) return;
+    // count CJK chars
+    const cjk = [...txt.value].filter(c => /[\u3400-\u9FFF\uF900-\uFAFF]/.test(c));
+    if (cjk.length < 2) return; // not enough to bother
+    // detect: try converting to Traditional — if output differs, it was Simplified/Kanji/etc
+    // Priority: Traditional always wins. Auto-normalize to Traditional.
+    const before = txt.value;
+    try {
+      const conv = OpenCC.Converter({ from:'cn', to:'tw' });
+      const after = conv(before);
+      if (after !== before) {
+        txt.value = after;
+        updateStats();
+        renderHL(before, after, 'var(--c-trad)');
+        toast(t('auto-trad'));
+      } else {
+        toast(t('detected-trad'));
+      }
+    } catch(e) { console.error('auto-detect failed', e); }
+  }, 1500);
+});
+
+// ----- zoom slider -----
+const zoom = $('zoom'), zval = $('zval');
+function applyZoom(v) {
+  const sz = (25 * v/100).toFixed(1) + 'px';
+  txt.style.fontSize = sz;
+  hlLayer.style.fontSize = sz;
+  zval.textContent = v + '%';
+}
+zoom.addEventListener('input', e => applyZoom(+e.target.value));
+$('zreset').addEventListener('click', () => { zoom.value = 100; applyZoom(100); });
+applyZoom(100);
+
+// ----- font swap -----
+let useAltFont = false;
+const fontSwapBtn = $('btn-fontswap');
+fontSwapBtn.addEventListener('click', () => {
+  useAltFont = !useAltFont;
+  txt.style.fontFamily = useAltFont
+    ? "'Noto Sans JP','Noto Sans SC','Malgun Gothic','Yu Gothic',sans-serif"
+    : '';
+  fontSwapBtn.textContent = useAltFont ? t('btn-fontswap-alt') : t('btn-fontswap');
+  toast(useAltFont ? t('font-noto') : t('font-wdxl'));
+});
+
+// ----- toast -----
+let toastT;
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 1600);
+}
+
+// ----- case ops [ 英大文字・小文字・センテンス変換処理 ] -----
+const cases = {
+  sentence: s => s.toLowerCase().replace(/(^\s*\w|[.!?]\s+\w)/g, c => c.toUpperCase()),
+  lower:    s => s.toLowerCase(),
+  upper:    s => s.toUpperCase(),
+  cap:      s => s.replace(/\b\w/g, c => c.toUpperCase()),
+  alt:      s => [...s].map((c,i) => i%2 ? c.toUpperCase() : c.toLowerCase()).join(''),
+  inverse:  s => [...s].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join(''),
+  title:    s => {
+    const small = new Set(['a','an','and','as','at','but','by','for','if','in','nor','of','on','or','the','to','up','yet']);
+    return s.toLowerCase().replace(/\b[\w']+/g, (w,i) =>
+      (i !== 0 && small.has(w)) ? w : w.charAt(0).toUpperCase() + w.slice(1)
+    );
+  },
+};
+document.querySelectorAll('[data-case]').forEach(b => {
+  b.addEventListener('click', () => {
+    txt.value = cases[b.dataset.case](txt.value);
+    updateStats();
+    clearHL();
+  });
+});
+
+// ----- 全角 ↔ 半角 (fullwidth ↔ halfwidth kana + ASCII) -----
+let kanaState = null; // null → first click = halfwidth, then toggles
+function toHalfwidth(s) {
+  // fullwidth katakana → halfwidth katakana
+  const FULL2HALF = {};
+  const fwKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォッャュョ゛゜ー・「」、。';
+  const hwKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｯｬｭｮﾞﾟｰ･｢｣､｡';
+  for (let i = 0; i < fwKana.length; i++) FULL2HALF[fwKana[i]] = hwKana[i];
+  // dakuten/handakuten combos
+  const DAKU = {'ガ':'ｶﾞ','ギ':'ｷﾞ','グ':'ｸﾞ','ゲ':'ｹﾞ','ゴ':'ｺﾞ','ザ':'ｻﾞ','ジ':'ｼﾞ','ズ':'ｽﾞ','ゼ':'ｾﾞ','ゾ':'ｿﾞ',
+    'ダ':'ﾀﾞ','ヂ':'ﾁﾞ','ヅ':'ﾂﾞ','デ':'ﾃﾞ','ド':'ﾄﾞ','バ':'ﾊﾞ','ビ':'ﾋﾞ','ブ':'ﾌﾞ','ベ':'ﾍﾞ','ボ':'ﾎﾞ',
+    'パ':'ﾊﾟ','ピ':'ﾋﾟ','プ':'ﾌﾟ','ペ':'ﾍﾟ','ポ':'ﾎﾟ','ヴ':'ｳﾞ'};
+  let out = '';
+  for (const ch of s) {
+    if (DAKU[ch]) { out += DAKU[ch]; }
+    else if (FULL2HALF[ch]) { out += FULL2HALF[ch]; }
+    // fullwidth ASCII (！-～ = U+FF01-FF5E) → halfwidth (! - ~ = U+0021-007E)
+    else if (ch.charCodeAt(0) >= 0xFF01 && ch.charCodeAt(0) <= 0xFF5E) {
+      out += String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
+    }
+    // fullwidth space
+    else if (ch === '\u3000') { out += ' '; }
+    else { out += ch; }
+  }
+  return out;
+}
+function toFullwidth(s) {
+  // halfwidth katakana → fullwidth katakana
+  const HALF2FULL = {};
+  const fwKana = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンァィゥェォッャュョ゛゜ー・「」、。';
+  const hwKana = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｯｬｭｮﾞﾟｰ･｢｣､｡';
+  for (let i = 0; i < hwKana.length; i++) HALF2FULL[hwKana[i]] = fwKana[i];
+  // handle dakuten/handakuten: hw base + ﾞ/ﾟ → fw combined
+  const DAKU_R = {'ｶﾞ':'ガ','ｷﾞ':'ギ','ｸﾞ':'グ','ｹﾞ':'ゲ','ｺﾞ':'ゴ','ｻﾞ':'ザ','ｼﾞ':'ジ','ｽﾞ':'ズ','ｾﾞ':'ゼ','ｿﾞ':'ゾ',
+    'ﾀﾞ':'ダ','ﾁﾞ':'ヂ','ﾂﾞ':'ヅ','ﾃﾞ':'デ','ﾄﾞ':'ド','ﾊﾞ':'バ','ﾋﾞ':'ビ','ﾌﾞ':'ブ','ﾍﾞ':'ベ','ﾎﾞ':'ボ',
+    'ﾊﾟ':'パ','ﾋﾟ':'ピ','ﾌﾟ':'プ','ﾍﾟ':'ペ','ﾎﾟ':'ポ','ｳﾞ':'ヴ'};
+  // first pass: combine dakuten pairs
+  let tmp = s;
+  for (const [hw, fw] of Object.entries(DAKU_R)) {
+    tmp = tmp.replaceAll(hw, fw);
+  }
+  let out = '';
+  for (const ch of tmp) {
+    if (HALF2FULL[ch]) { out += HALF2FULL[ch]; }
+    // halfwidth ASCII (! - ~ = U+0021-007E) → fullwidth (U+FF01-FF5E)
+    else if (ch.charCodeAt(0) >= 0x0021 && ch.charCodeAt(0) <= 0x007E) {
+      out += String.fromCharCode(ch.charCodeAt(0) + 0xFEE0);
+    }
+    else { out += ch; }
+  }
+  return out;
+}
+function hasHalfwidth(s) {
+  return /[\uFF61-\uFF9F]/.test(s) || /[\u0021-\u007E]/.test(s);
+}
+function hasFullwidth(s) {
+  return /[\u30A0-\u30FF]/.test(s) || /[\uFF01-\uFF5E]/.test(s);
+}
+
+$('btn-kana').addEventListener('click', () => {
+  if (!txt.value) { toast(t('empty-buffer')); return; }
+  const half = hasHalfwidth(txt.value);
+  const full = hasFullwidth(txt.value);
+
+  if (kanaState === 'full') {
+    // was fullwidth → go halfwidth
+    txt.value = toHalfwidth(txt.value);
+    kanaState = 'half';
+    toast(t('half-kana'));
+  } else if (kanaState === 'half') {
+    // was halfwidth → go fullwidth
+    txt.value = toFullwidth(txt.value);
+    kanaState = 'full';
+    toast(t('full-kana'));
+  } else {
+    // first click (null state): mixed or unknown → force halfwidth
+    txt.value = toHalfwidth(txt.value);
+    kanaState = 'half';
+    toast(t('half-kana'));
+  }
+  updateStats();
+  clearHL();
+});
+
+// ----- hanzi / kanji / hanja converters [ 中日韓字形変換エンジン ] -----
+// Korean Hanja reform map (reformed pick → variant) — covers the common ones
+// where Korean Hanja prefers a reduced form (e.g. 教 not 敎, 研 not 硏).
+const HANJA_REFORM = {
+  '敎':'教', '硏':'研', '爲':'为', // reformed picks
+  // a handful of others where modern Korean Hanja uses the reform glyph
+  '說':'説', '眞':'真', '裵':'裴', '姙':'妊', '姫':'姬',
+};
+function toHanja(s) {
+  if (!window.OpenCC) return s;
+  // Start from Traditional (Hanja base), then apply Korean reform picks.
+  // If a char has no Hanja equivalent, it stays as Traditional (our fallback).
+  const toTrad = OpenCC.Converter({ from:'cn', to:'tw' });
+  const trad = toTrad(s);
+  let out = '';
+  for (const ch of trad) out += (HANJA_REFORM[ch] || ch);
+  return out;
+}
+
+function runConvert(which, fn, color) {
+  if (!window.OpenCC) { toast(t('opencc-not-loaded')); return; }
+  const before = txt.value;
+  if (!before) { toast(t('empty-buffer')); return; }
+  let after;
+  try { after = fn(before); }
+  catch (e) { toast(t('convert-failed')); console.error(e); return; }
+  txt.value = after;
+  updateStats();
+  renderHL(before, after, color);
+  flashBtn(which);
+  if (activePron) renderReading(activePron);
+  toast(t('converted').replace('{which}', which));
+}
+
+function flashBtn(id) {
+  const b = document.getElementById('btn-' + id);
+  if (!b) return;
+  b.classList.add('flashing');
+  setTimeout(() => b.classList.remove('flashing'), 360);
+}
+
+$('btn-trad').addEventListener('click',  () => runConvert('trad',
+  s => OpenCC.Converter({from:'cn',to:'tw'})(s), 'var(--c-trad)'));
+$('btn-simp').addEventListener('click',  () => runConvert('simp',
+  s => OpenCC.Converter({from:'tw',to:'cn'})(s), 'var(--c-simp)'));
+$('btn-kanji').addEventListener('click', () => runConvert('kanji',
+  s => OpenCC.Converter({from:'tw',to:'jp'})(s), 'var(--c-kanji)'));
+$('btn-hanja').addEventListener('click', () => runConvert('hanja',
+  s => toHanja(s), 'var(--c-hanja)'));
+
+// ----- reading panel -----
+const readingPanel = $('reading-panel');
+const readingBody = $('reading-body');
+function hideReading() { readingPanel.classList.remove('show'); }
+function showReading() { readingPanel.classList.add('show'); }
+$('rclose').addEventListener('click', hideReading);
+
+// ----- pronunciation toggle -----
+let activePron = null; // 'bopomofo'|'pinyin'|'jp'|'kr'|null
+const pronBtns = document.querySelectorAll('#pron-bar .fbtn.pron');
+pronBtns.forEach(btn => {
+  btn.addEventListener('mousedown', e => e.preventDefault()); // keep textarea focus
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.pron;
+    if (activePron === key) {
+      // toggle off
+      btn.classList.remove('active');
+      activePron = null;
+      hideReading();
+    } else {
+      pronBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePron = key;
+      renderReading(key);
+    }
+  });
+});
+
+function renderReading(key) {
+  const text = txt.value;
+  if (!text) { hideReading(); return; }
+  const chars = [...text];
+  const colorMap = { bopomofo:'var(--c-trad)', pinyin:'var(--c-simp)', jp:'var(--c-kanji)', kr:'var(--c-hanja)', vi:'var(--c-hannom)' };
+  const color = colorMap[key] || 'var(--accent)';
+  let html = '';
+  for (const ch of chars) {
+    if (ch === '\n') {
+      html += '<div class="brk"></div>';
+      continue;
+    }
+    const isCJK = /[\u3400-\u9FFF\uF900-\uFAFF]/.test(ch);
+    const reading = isCJK ? lookupReading(ch, key) : '';
+    const esc = c => c.replace(/[&<>]/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));
+    html += '<div class="rd">';
+    html += '<span class="char">' + esc(ch) + '</span>';
+    html += '<span class="read' + (reading ? ' has' : '') + '" style="--rd-color:' + color + '">' + (reading || '·') + '</span>';
+    html += '</div>';
+  }
+  readingBody.innerHTML = html;
+  showReading();
+}
+
+// ----- pinyin → bopomofo converter [ 拼音・注音符号変換処理ロジック ] -----
+const PY2BPM = {
+  'b':'ㄅ','p':'ㄆ','m':'ㄇ','f':'ㄈ',
+  'd':'ㄉ','t':'ㄊ','n':'ㄋ','l':'ㄌ',
+  'g':'ㄍ','k':'ㄎ','h':'ㄏ',
+  'j':'ㄐ','q':'ㄑ','x':'ㄒ',
+  'zh':'ㄓ','ch':'ㄔ','sh':'ㄕ','r':'ㄖ',
+  'z':'ㄗ','c':'ㄘ','s':'ㄙ',
+  'a':'ㄚ','o':'ㄛ','e':'ㄜ','ê':'ㄝ',
+  'ai':'ㄞ','ei':'ㄟ','ao':'ㄠ','ou':'ㄡ',
+  'an':'ㄢ','en':'ㄣ','ang':'ㄤ','eng':'ㄥ','er':'ㄦ',
+  'i':'ㄧ','u':'ㄨ','ü':'ㄩ','v':'ㄩ',
+  'ia':'ㄧㄚ','ie':'ㄧㄝ','iao':'ㄧㄠ','iu':'ㄧㄡ','iou':'ㄧㄡ',
+  'ian':'ㄧㄢ','in':'ㄧㄣ','iang':'ㄧㄤ','ing':'ㄧㄥ',
+  'ua':'ㄨㄚ','uo':'ㄨㄛ','uai':'ㄨㄞ','ui':'ㄨㄟ','uei':'ㄨㄟ',
+  'uan':'ㄨㄢ','un':'ㄨㄣ','uen':'ㄨㄣ','uang':'ㄨㄤ','ong':'ㄨㄥ',
+  'üe':'ㄩㄝ','ue':'ㄩㄝ','üan':'ㄩㄢ','uan_j':'ㄩㄢ',
+  'ün':'ㄩㄣ','un_j':'ㄩㄣ','iong':'ㄩㄥ',
+};
+const TONE_MARKS = {'ā':'a1','á':'a2','ǎ':'a3','à':'a4',
+  'ē':'e1','é':'e2','ě':'e3','è':'e4',
+  'ī':'i1','í':'i2','ǐ':'i3','ì':'i4',
+  'ō':'o1','ó':'o2','ǒ':'o3','ò':'o4',
+  'ū':'u1','ú':'u2','ǔ':'u3','ù':'u4',
+  'ǖ':'ü1','ǘ':'ü2','ǚ':'ü3','ǜ':'ü4'};
+const TONE_BPM = ['','','ˊ','ˇ','ˋ','˙']; // 1=no mark, 2=ˊ, 3=ˇ, 4=ˋ, 5=˙
+
+function pinyinToBopomofo(py) {
+  if (!py) return '';
+  // strip tone mark → get base + tone number
+  let tone = 0, base = '';
+  for (const ch of py) {
+    if (TONE_MARKS[ch]) {
+      const [vowel, t] = [TONE_MARKS[ch].slice(0,-1), +TONE_MARKS[ch].slice(-1)];
+      base += vowel; tone = t;
+    } else {
+      base += ch;
+    }
+  }
+  if (!tone) { base = py; tone = 1; }
+
+  // handle y-/w- pseudo-initials (spelling conventions, not real initials in Bopomofo)
+  const YW = {
+    'yi':'ㄧ','ya':'ㄧㄚ','ye':'ㄧㄝ','yao':'ㄧㄠ','you':'ㄧㄡ',
+    'yan':'ㄧㄢ','yin':'ㄧㄣ','yang':'ㄧㄤ','ying':'ㄧㄥ','yong':'ㄩㄥ',
+    'yu':'ㄩ','yue':'ㄩㄝ','yuan':'ㄩㄢ','yun':'ㄩㄣ',
+    'wu':'ㄨ','wa':'ㄨㄚ','wo':'ㄨㄛ','wai':'ㄨㄞ','wei':'ㄨㄟ',
+    'wan':'ㄨㄢ','wen':'ㄨㄣ','wang':'ㄨㄤ','weng':'ㄨㄥ',
+  };
+  if (YW[base]) {
+    let bpm = YW[base];
+    if (tone > 1) bpm += TONE_BPM[tone];
+    return bpm;
+  }
+
+  // detect initial consonant
+  let initial = '', final_ = base;
+  const initials = ['zh','ch','sh','b','p','m','f','d','t','n','l','g','k','h','j','q','x','r','z','c','s'];
+  for (const ini of initials) {
+    if (base.startsWith(ini)) {
+      initial = ini;
+      final_ = base.slice(ini.length);
+      break;
+    }
+  }
+
+  // handle special finals for j/q/x (ü written as u)
+  if ('jqx'.includes(initial) && final_.startsWith('u')) {
+    final_ = 'ü' + final_.slice(1);
+  }
+
+  // zhi/chi/shi/ri/zi/ci/si → no final vowel shown
+  if (['zh','ch','sh','r','z','c','s'].includes(initial) && final_ === 'i') {
+    final_ = '';
+  }
+
+  let bpm = (PY2BPM[initial] || '');
+  // try longest final match
+  let matched = false;
+  for (let len = final_.length; len > 0; len--) {
+    const chunk = final_.slice(0, len);
+    if (PY2BPM[chunk]) {
+      bpm += PY2BPM[chunk];
+      matched = true;
+      break;
+    }
+  }
+  if (!matched && final_) bpm += final_;
+
+  // append tone mark (tone 1 = no mark)
+  if (tone > 1) bpm += TONE_BPM[tone];
+  return bpm;
+}
+
+// ----- reading dictionary lookup [ 読解辞書検索・マッピング処理 ] -----
+function loadReadings() {
+  if (!window.UNIHAN_READINGS) return;
+  const R = window.UNIHAN_READINGS;
+  READING_DICTS.jp = R.jp || {};
+  READING_DICTS.kr = R.kr || {};
+  READING_DICTS.vi = R.vi || {};
+  READING_DICTS.pinyin = R.pinyin || {};
+}
+const READING_DICTS = { bopomofo:{}, pinyin:{}, jp:{}, kr:{}, vi:{} };
+loadReadings();
+
+function lookupReading(ch, key) {
+  if (key === 'bopomofo') {
+    const py = (READING_DICTS.pinyin || {})[ch];
+    return py ? pinyinToBopomofo(py) : '';
+  }
+  if (key === 'pinyin') {
+    return (READING_DICTS.pinyin || {})[ch] || '';
+  }
+  const dict = READING_DICTS[key];
+  return dict ? (dict[ch] || '') : '';
+}
+
+// ----- label rotation (single line cycle) -----
+document.querySelectorAll('.btn-conv .line').forEach(line => {
+  const alts = line.querySelectorAll('.alt');
+  if (alts.length < 2) return;
+  let i = 0;
+  setInterval(() => {
+    alts[i].classList.remove('on');
+    i = (i + 1) % alts.length;
+    alts[i].classList.add('on');
+    // sync data-text so chromatic ::before/::after overlay matches
+    line.setAttribute('data-text', alts[i].getAttribute('data-plain') || '');
+    const btn = line.closest('.btn-conv');
+    if (btn) {
+      btn.classList.add('flashing');
+      setTimeout(() => btn.classList.remove('flashing'), 340);
+    }
+  }, 4200 + Math.random()*800);
+});
+
+// ----- uniform button width (match the widest — Traditional is longest) -----
+function matchConvWidths() {
+  const btns = document.querySelectorAll('.btn-conv');
+  if (!btns.length) return;
+  btns.forEach(b => b.style.width = '');
+  let max = 0;
+  btns.forEach(b => { max = Math.max(max, b.offsetWidth); });
+  // fill row: if buttons fit in one row at max width, use full-row distribution
+  const bar = document.querySelector('.bar-conv');
+  const gap = 5, available = bar.offsetWidth - gap * (btns.length - 1);
+  const perBtn = Math.floor(available / btns.length);
+  const w = perBtn >= max ? perBtn : max;
+  btns.forEach(b => b.style.width = w + 'px');
+}
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(matchConvWidths);
+}
+window.addEventListener('load', matchConvWidths);
+window.addEventListener('resize', () => { clearTimeout(window.__mw); window.__mw = setTimeout(matchConvWidths, 120); });
+
+// ----- Hán-Nôm single-char lookup -----
+const hanRe = /^[\u3400-\u9FFF\uF900-\uFAFF]$/;
+let lastHanChar = '';
+function currentSelection() {
+  if (txt.selectionStart != null && txt.selectionEnd > txt.selectionStart) {
+    return txt.value.substring(txt.selectionStart, txt.selectionEnd);
+  }
+  const ws = window.getSelection && window.getSelection().toString();
+  return ws || '';
+}
+function refreshHanNom() {
+  const sel = currentSelection();
+  const btn = $('btn-hannom');
+  if (sel.length === 1 && hanRe.test(sel)) {
+    lastHanChar = sel;
+    btn.disabled = false;
+  } else if (sel.length === 0 && lastHanChar) {
+    btn.disabled = false;
+  } else {
+    lastHanChar = '';
+    btn.disabled = true;
+  }
+}
+['select','keyup','mouseup','input'].forEach(ev => txt.addEventListener(ev, refreshHanNom));
+document.addEventListener('selectionchange', refreshHanNom);
+$('btn-hannom').addEventListener('mousedown', e => e.preventDefault());
+$('btn-hannom').addEventListener('click', () => {
+  const sel = currentSelection();
+  const ch = (sel.length === 1 && hanRe.test(sel)) ? sel : lastHanChar;
+  if (ch && hanRe.test(ch)) {
+    window.open('https://hvdic.thivien.net/whv/' + encodeURIComponent(ch), '_blank', 'noopener');
+  } else {
+    toast(t('select-han'));
+  }
+});
+
+// ----- theme switcher -----
+const savedTheme = localStorage.getItem('td-convert-theme') || 'golden_green';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.querySelectorAll('[data-theme-btn]').forEach(b => {
+  if (b.dataset.themeBtn === savedTheme) b.classList.add('active');
+  else b.classList.remove('active');
+  b.addEventListener('click', () => {
+    const t = b.dataset.themeBtn;
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('td-convert-theme', t);
+    document.querySelectorAll('[data-theme-btn]').forEach(x =>
+      x.classList.toggle('active', x.dataset.themeBtn === t)
+    );
+  });
+});
+
+// ----- buffer ops -----
+// ----- paste button -----
+$('btn-paste').addEventListener('click', async () => {
+  try {
+    const clip = await navigator.clipboard.readText();
+    if (clip) {
+      txt.value = clip;
+      txt.dispatchEvent(new Event('input'));
+      toast(t('pasted'));
+    } else {
+      toast(t('clipboard-empty'));
+    }
+  } catch { toast(t('paste-failed')); }
+});
+
+// ----- copy button (copies all, saves to history in app mode) -----
+const HISTORY_PHRASES = [
+  'Added','Đã thêm','追加した','추가됨','已添加',
+  'Ajouté','Añadido','Hinzugefügt','Aggiunto','追加済み',
+  'Đã lưu','保存した','Saved','Guardado','저장됨',
+];
+$('btn-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(txt.value);
+    toast('copied');
+    // save to history if running in pywebview app
+    if (window.pywebview && window.pywebview.api && txt.value.trim()) {
+      await window.pywebview.api.push_history(txt.value, 'copy');
+      // show tooltip under history button
+      const phrase = HISTORY_PHRASES[Math.floor(Math.random() * HISTORY_PHRASES.length)];
+      showHistoryTip(phrase);
+    }
+  } catch { toast('copy failed'); }
+});
+
+function showHistoryTip(msg) {
+  let tip = document.getElementById('sc-history-tip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'sc-history-tip';
+    tip.style.cssText = 'position:fixed;top:42px;left:18px;z-index:101;'
+      + 'font-size:10px;letter-spacing:1.5px;color:var(--accent,#de7029);'
+      + 'background:rgba(0,0,0,0.85);border:1px solid var(--accent-dim,rgba(222,112,41,0.35));'
+      + 'padding:5px 10px;pointer-events:none;opacity:0;transition:opacity .2s;'
+      + 'font-family:inherit;';
+    document.body.appendChild(tip);
+  }
+  tip.textContent = msg;
+  tip.style.opacity = '1';
+  clearTimeout(tip._t);
+  tip._t = setTimeout(() => { tip.style.opacity = '0'; }, 1200);
+}
+$('btn-clear').addEventListener('click', () => {
+  txt.value = '';
+  updateStats();
+  clearHL();
+  hideReading();
+  refreshHanNom();
+  txt.focus();
+});
+$('btn-download').addEventListener('click', () => {
+  const blob = new Blob([txt.value], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'convert-' + Date.now() + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+updateStats();
+refreshHanNom();
+
+// ----- info panel -----
+const infoOverlay = $('info-overlay');
+$('info-open').addEventListener('click', () => infoOverlay.classList.add('open'));
+infoOverlay.querySelector('.info-close').addEventListener('click', () => infoOverlay.classList.remove('open'));
+infoOverlay.addEventListener('click', e => { if (e.target === infoOverlay) infoOverlay.classList.remove('open'); });
+
+// ----- i18n language switcher [ 言語切替 ] -----
+let currentLang = localStorage.getItem('td-convert-lang') || 'en';
+
+function t(key) {
+  const dict = window.I18N && window.I18N[currentLang];
+  return (dict && dict[key]) || (window.I18N && window.I18N.en && window.I18N.en[key]) || key;
+}
+
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('td-convert-lang', lang);
+  document.documentElement.setAttribute('lang', lang);
+
+  // simple text nodes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  // rich HTML nodes (paragraphs with embedded spans, chips, etc.)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t(el.dataset.i18nHtml);
+    if (v !== el.dataset.i18nHtml) el.innerHTML = v;
+  });
+  // placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  // title attribute
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  // data-glitch attribute (close button swap)
+  document.querySelectorAll('[data-i18n-glitch]').forEach(el => {
+    el.setAttribute('data-glitch', t(el.dataset.i18nGlitch));
+  });
+
+  // update lang buttons
+  document.querySelectorAll('[data-lang-btn]').forEach(b => {
+    b.classList.toggle('active', b.dataset.langBtn === lang);
+  });
+
+  // font swap button tracks its own alt state
+  fontSwapBtn.textContent = useAltFont ? t('btn-fontswap-alt') : t('btn-fontswap');
+}
+
+document.querySelectorAll('[data-lang-btn]').forEach(b => {
+  b.addEventListener('click', () => applyLang(b.dataset.langBtn));
+});
+
+// apply saved language on load
+applyLang(currentLang);
+
+// ----- scroll: show bar title when .mark scrolls out [ スクロール時ヘッダータイトル表示 ] -----
+(() => {
+  const bar = document.querySelector('.top-bar');
+  const mark = document.querySelector('header.brand .mark');
+  if (!bar || !mark) return;
+  const obs = new IntersectionObserver(([e]) => {
+    bar.classList.toggle('show-title', !e.isIntersecting);
+  }, { threshold: 0 });
+  obs.observe(mark);
+})();
+</script>
+</body>
+</html>
